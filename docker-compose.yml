@@ -1,0 +1,108 @@
+version: '3'
+services:
+  sse-db:
+    image: postgres
+    expose:
+      - "5432"
+    networks:
+      - sse
+    volumes:
+      - ./sse-postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${SSE_SERVER_DB_USER}
+      POSTGRES_PASSWORD: ${SSE_SERVER_DB_PASSWORD}
+      POSTGRES_DB: ${SSE_SERVER_DB_NAME}
+      PGDATA: /var/lib/postgresql/data
+
+  sse-server:
+    build:
+      context: ./sse-server
+      args:
+        VER: ${SSE_SERVER_VER}
+    ports:
+      - "8080:8080"
+    expose:
+      - "8080"
+    networks:
+      - sse
+      - front
+    depends_on:
+      - sse-db
+      - ta
+    environment:
+      DJANGO_LOGLEVEL: ${SSE_SERVER_DJANGO_LOGLEVEL}
+      TA_SERVER: ${SSE_SERVER_TA_SERVER}
+      DB_NAME: ${SSE_SERVER_DB_NAME}
+      DB_USER: ${SSE_SERVER_DB_USER}
+      DB_PASSWORD: ${SSE_SERVER_DB_PASSWORD}
+      DB_HOST: ${SSE_SERVER_DB_HOST}
+      DB_PORT: ${SSE_SERVER_DB_PORT}
+      ALLOWED_HOSTS: ${SSE_SERVER_ALLOWED_HOSTS}
+
+  ta-db:
+    image: postgres
+    expose:
+      - "5432"
+    networks:
+      - ta
+    volumes:
+      - ./ta-postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${TA_DB_USER}
+      POSTGRES_PASSWORD: ${TA_DB_PASSWORD}
+      POSTGRES_DB: ${TA_DB_NAME}
+      PGDATA: /var/lib/postgresql/data
+
+  ta:
+    build:
+      context: ./ta
+      args:
+        VER: ${TA_VER}
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+    networks:
+      - ta
+      - front
+    depends_on:
+      - ta-db
+    environment:
+      DJANGO_LOGLEVEL: ${TA_DJANGO_LOGLEVEL}
+      DB_NAME: ${TA_DB_NAME}
+      DB_USER: ${TA_DB_USER}
+      DB_PASSWORD: ${TA_DB_PASSWORD}
+      DB_HOST: ${TA_DB_HOST}
+      DB_PORT: ${TA_DB_PORT}
+      ALLOWED_HOSTS: ${TA_ALLOWED_HOSTS}
+      # TA_HASH_LENGTH: ${TA_HASH_LENGTH}
+      # TA_KEY_G: ${TA_KEY_G}
+      # TA_SALT: ${TA_SALT}
+      # TA_IV: ${TA_IV}
+
+  sse-client:
+    build:
+      context: ./sse-client
+      args:
+        VER: ${SSE_CLIENT_VER}
+        TA_URL: ${SSE_CLIENT_TA_URL}
+        SSE_URL: ${SSE_CLIENT_SSE_URL}
+        SALT_VALUE: ${SSE_CLIENT_SALT_VALUE}
+        IV_VALUE: ${SSE_CLIENT_IV_VALUE}
+    ports:
+      - "80:80"
+    expose:
+      - "80"
+    networks:
+      - front
+    depends_on:
+      - sse-server
+      - ta
+
+networks:
+ sse:
+  driver: bridge
+ ta:
+  driver: bridge
+ front:
+  driver: bridge

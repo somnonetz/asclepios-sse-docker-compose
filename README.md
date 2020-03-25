@@ -2,6 +2,10 @@
 
 docker-compose set up for the ASCLPIOS symmetric searchable encryption service
 
+<p align="center">
+  <img src="docker-compose.png">
+</p>
+
 ## Usage
 
 ```
@@ -14,4 +18,4 @@ Once it has successfully booted, each components is accessible on the host as fo
 
 * SSE Client - `http://localhost:80`
 * SSE Server - `http://localhost:8080`
-* TA - `http/localhost:8000`
+* TA - `http://localhost:8000`

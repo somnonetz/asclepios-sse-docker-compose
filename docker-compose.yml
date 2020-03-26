@@ -93,8 +93,6 @@ services:
       - "80:80"
     expose:
       - "80"
-    networks:
-      - front
     depends_on:
       - sse-server
       - ta

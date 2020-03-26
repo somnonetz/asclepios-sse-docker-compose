@@ -12,8 +12,8 @@ ENV PROJECT_ROOT=/srv/SSEClient
 # install wget then download and extract source code to project root
 RUN apt-get update && \
     apt-get install -y wget && \
-    wget https://github.com/jmz-b/Asclepios-Client/archive/v${VER}.tar.gz && \
-    tar -zxf v${VER}.tar.gz && \
+    wget https://github.com/UoW-CPC/Asclepios-Client/archive/${VER}.tar.gz && \
+    tar -zxf ${VER}.tar.gz && \
     rm -f ${VER}.tar.gz && \ 
     mv Asclepios-Client-${VER} ${PROJECT_ROOT} && \
     apt-get remove -y --purge wget && \

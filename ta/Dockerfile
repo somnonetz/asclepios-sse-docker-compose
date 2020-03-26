@@ -8,8 +8,8 @@ ENV PROJECT_ROOT=/srv/TA
 # install wget then download and extract source code to project root
 RUN apt-get update && \
     apt-get install -y wget postgresql-client && \
-    wget https://github.com/jmz-b/Asclepios-TrustedAuthority/archive/v${VER}.tar.gz && \
-    tar -zxf v${VER}.tar.gz && \
+    wget https://github.com/UoW-CPC/Asclepios-TrustedAuthority/archive/${VER}.tar.gz && \
+    tar -zxf ${VER}.tar.gz && \
     rm -f ${VER}.tar.gz && \ 
     mv Asclepios-TrustedAuthority-${VER} ${PROJECT_ROOT} && \
     apt-get remove -y --purge wget && \

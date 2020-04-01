@@ -1,6 +1,6 @@
 # asclepios-sse-docker-compose
 
-docker-compose set up for the ASCLPIOS symmetric searchable encryption service
+docker-compose set up for the ASCLEPIOS symmetric searchable encryption service
 
 <p align="center">
   <img src="docker-compose.png">
@@ -19,3 +19,10 @@ Once it has successfully booted, each components is accessible on the host as fo
 * SSE Client - `http://localhost:80`
 * SSE Server - `http://localhost:8080`
 * TA - `http://localhost:8000`
+
+## Links
+
+* [ASCLEPIOS SSE Client](https://github.com/UoW-CPC/Asclepios-Client)
+* [ASCLEPIOS SSE Server](https://github.com/UoW-CPC/Asclepios-Server)
+* [ASCLEPIOS Trusted Authority](https://github.com/UoW-CPC/Asclepios-TrustedAuthority)
+* [ASCLEPIOS SSE Manuals](https://github.com/UoW-CPC/Asclepios-Manual)

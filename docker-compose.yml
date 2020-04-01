@@ -38,6 +38,7 @@ services:
       DB_HOST: ${SSE_SERVER_DB_HOST}
       DB_PORT: ${SSE_SERVER_DB_PORT}
       ALLOWED_HOSTS: ${SSE_SERVER_ALLOWED_HOSTS}
+      DJANGO_DEBUG: ${SSE_SERVER_DJANGO_DEBUG}
 
   ta-db:
     image: postgres
@@ -75,10 +76,11 @@ services:
       DB_HOST: ${TA_DB_HOST}
       DB_PORT: ${TA_DB_PORT}
       ALLOWED_HOSTS: ${TA_ALLOWED_HOSTS}
-      # TA_HASH_LENGTH: ${TA_HASH_LENGTH}
-      # TA_KEY_G: ${TA_KEY_G}
-      # TA_SALT: ${TA_SALT}
-      # TA_IV: ${TA_IV}
+      HASH_LENGTH: ${TA_HASH_LENGTH}
+      KEY_G: ${TA_KEY_G}
+      SALT: ${TA_SALT}
+      IV: ${TA_IV}
+      DJANGO_DEBUG: ${TA_DJANGO_DEBUG}
 
   sse-client:
     build:
@@ -98,6 +100,9 @@ services:
     depends_on:
       - sse-server
       - ta
+    environment:
+      ALLOWED_HOSTS: ${SSE_CLIENT_ALLOWED_HOSTS}
+      DJANGO_DEBUG: ${SSE_CLIENT_DJANGO_DEBUG}
 
 networks:
  sse:

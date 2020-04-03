@@ -7,7 +7,7 @@ services:
     networks:
       - sse
     volumes:
-      - ./sse-postgres-data:/var/lib/postgresql/data
+      - sse-db-data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${SSE_SERVER_DB_USER}
       POSTGRES_PASSWORD: ${SSE_SERVER_DB_PASSWORD}
@@ -47,7 +47,7 @@ services:
     networks:
       - ta
     volumes:
-      - ./ta-postgres-data:/var/lib/postgresql/data
+      - ta-db-data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${TA_DB_USER}
       POSTGRES_PASSWORD: ${TA_DB_PASSWORD}
@@ -111,3 +111,7 @@ networks:
   driver: bridge
  front:
   driver: bridge
+
+volumes:
+  sse-db-data:
+  ta-db-data:

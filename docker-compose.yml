@@ -1,4 +1,4 @@
-version: '3'
+version: '3.5'
 services:
   sse-db:
     image: postgres
@@ -111,6 +111,7 @@ networks:
   driver: bridge
  front:
   driver: bridge
+  name: sse-front
 
 volumes:
   sse-db-data:

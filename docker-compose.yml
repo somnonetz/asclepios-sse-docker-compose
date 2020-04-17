@@ -16,8 +16,6 @@ services:
 
   sse:
     image: somnonetz/asclepios-sse
-    ports:
-      - "8080:8080"
     expose:
       - "8080"
     networks:
@@ -53,8 +51,6 @@ services:
 
   ta:
     image: somnonetz/asclepios-ta
-    ports:
-      - "8000:8000"
     expose:
       - "8000"
     networks:

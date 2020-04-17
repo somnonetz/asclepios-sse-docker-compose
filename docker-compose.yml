@@ -14,11 +14,8 @@ services:
       POSTGRES_DB: ${SSE_SERVER_DB_NAME}
       PGDATA: /var/lib/postgresql/data
 
-  sse-server:
-    build:
-      context: ./sse-server
-      args:
-        VER: ${SSE_SERVER_VER}
+  sse:
+    image: somnonetz/asclepios-sse
     ports:
       - "8080:8080"
     expose:
@@ -55,10 +52,7 @@ services:
       PGDATA: /var/lib/postgresql/data
 
   ta:
-    build:
-      context: ./ta
-      args:
-        VER: ${TA_VER}
+    image: somnonetz/asclepios-ta
     ports:
       - "8000:8000"
     expose:
@@ -82,28 +76,6 @@ services:
       IV: ${TA_IV}
       DJANGO_DEBUG: ${TA_DJANGO_DEBUG}
 
-  sse-client:
-    build:
-      context: ./sse-client
-      args:
-        VER: ${SSE_CLIENT_VER}
-        TA_URL: ${SSE_CLIENT_TA_URL}
-        SSE_URL: ${SSE_CLIENT_SSE_URL}
-        SALT_VALUE: ${SSE_CLIENT_SALT_VALUE}
-        IV_VALUE: ${SSE_CLIENT_IV_VALUE}
-    ports:
-      - "80:80"
-    expose:
-      - "80"
-    networks:
-      - front
-    depends_on:
-      - sse-server
-      - ta
-    environment:
-      ALLOWED_HOSTS: ${SSE_CLIENT_ALLOWED_HOSTS}
-      DJANGO_DEBUG: ${SSE_CLIENT_DJANGO_DEBUG}
-
 networks:
  sse:
   driver: bridge
@@ -111,7 +83,7 @@ networks:
   driver: bridge
  front:
   driver: bridge
-  name: sse-front
+  name: asclepios
 
 volumes:
   sse-db-data:

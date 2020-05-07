@@ -2,10 +2,6 @@
 
 docker-compose set up for the ASCLEPIOS symmetric searchable encryption service
 
-<p align="center">
-  <img src="docker-compose.png">
-</p>
-
 ## Usage
 
 ```

@@ -5,7 +5,7 @@ services:
     expose:
       - "5432"
     networks:
-      - sse
+      - asclepios
     volumes:
       - sse-db-data:/var/lib/postgresql/data
     environment:
@@ -14,18 +14,14 @@ services:
       POSTGRES_DB: ${SSE_SERVER_DB_NAME}
       PGDATA: /var/lib/postgresql/data
 
-  sse-server:
-    build:
-      context: ./sse-server
-      args:
-        VER: ${SSE_SERVER_VER}
+  sse:
+    image: uowcpc/asclepios-server:dev
     ports:
       - "8080:8080"
     expose:
       - "8080"
     networks:
-      - sse
-      - front
+      - asclepios
     depends_on:
       - sse-db
       - ta
@@ -45,7 +41,7 @@ services:
     expose:
       - "5432"
     networks:
-      - ta
+      - asclepios
     volumes:
       - ta-db-data:/var/lib/postgresql/data
     environment:
@@ -55,17 +51,13 @@ services:
       PGDATA: /var/lib/postgresql/data
 
   ta:
-    build:
-      context: ./ta
-      args:
-        VER: ${TA_VER}
+    image: uowcpc/asclepios-ta:dev
     ports:
       - "8000:8000"
     expose:
       - "8000"
     networks:
-      - ta
-      - front
+      - asclepios
     depends_on:
       - ta-db
     environment:
@@ -83,35 +75,24 @@ services:
       DJANGO_DEBUG: ${TA_DJANGO_DEBUG}
 
   sse-client:
-    build:
-      context: ./sse-client
-      args:
-        VER: ${SSE_CLIENT_VER}
-        TA_URL: ${SSE_CLIENT_TA_URL}
-        SSE_URL: ${SSE_CLIENT_SSE_URL}
-        SALT_VALUE: ${SSE_CLIENT_SALT_VALUE}
-        IV_VALUE: ${SSE_CLIENT_IV_VALUE}
+    image: uowcpc/asclepios-client:dev
     ports:
       - "80:80"
     expose:
       - "80"
     networks:
-      - front
+      - asclepios
     depends_on:
-      - sse-server
+      - sse
       - ta
     environment:
       ALLOWED_HOSTS: ${SSE_CLIENT_ALLOWED_HOSTS}
       DJANGO_DEBUG: ${SSE_CLIENT_DJANGO_DEBUG}
 
 networks:
- sse:
+ asclepios:
   driver: bridge
- ta:
-  driver: bridge
- front:
-  driver: bridge
-  name: sse-front
+  name: asclepios
 
 volumes:
   sse-db-data:

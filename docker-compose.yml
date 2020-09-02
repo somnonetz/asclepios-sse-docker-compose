@@ -7,7 +7,7 @@ services:
     networks:
       - asclepios
     volumes:
-      - sse-db-data:/var/lib/postgresql/data
+      - ./data/sse-db:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${SSE_SERVER_DB_USER}
       POSTGRES_PASSWORD: ${SSE_SERVER_DB_PASSWORD}
@@ -15,7 +15,7 @@ services:
       PGDATA: /var/lib/postgresql/data
 
   sse:
-    image: uowcpc/asclepios-server:dev
+    image: uowcpc/asclepios-server:0.2_postgres
     ports:
       - "8080:8080"
     expose:
@@ -35,6 +35,13 @@ services:
       DB_PORT: ${SSE_SERVER_DB_PORT}
       ALLOWED_HOSTS: ${SSE_SERVER_ALLOWED_HOSTS}
       DJANGO_DEBUG: ${SSE_SERVER_DJANGO_DEBUG}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
+      MINIO_URL: ${MINIO_URL}
+      MINIO_SSL_SECURE: ${MINIO_SSL_SECURE}
+      MINIO_EXPIRE_GET: ${MINIO_EXPIRE_GET}
+      MINIO_EXPIRE_PUT: ${MINIO_EXPIRE_PUT}
 
   ta-db:
     image: postgres
@@ -43,7 +50,7 @@ services:
     networks:
       - asclepios
     volumes:
-      - ta-db-data:/var/lib/postgresql/data
+      - ./data/ta-db:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${TA_DB_USER}
       POSTGRES_PASSWORD: ${TA_DB_PASSWORD}
@@ -51,7 +58,7 @@ services:
       PGDATA: /var/lib/postgresql/data
 
   ta:
-    image: uowcpc/asclepios-ta:dev
+    image: uowcpc/asclepios-ta:0.2_postgres
     ports:
       - "8000:8000"
     expose:
@@ -60,6 +67,7 @@ services:
       - asclepios
     depends_on:
       - ta-db
+    # entrypoint: gunicorn TA.wsgi:application --name TA --bind 0.0.0.0:8000 --workers 3 --limit-request-line 0
     environment:
       DJANGO_LOGLEVEL: ${TA_DJANGO_LOGLEVEL}
       DB_NAME: ${TA_DB_NAME}
@@ -75,9 +83,9 @@ services:
       DJANGO_DEBUG: ${TA_DJANGO_DEBUG}
 
   sse-client:
-    image: uowcpc/asclepios-client:dev
+    image: uowcpc/asclepios-client:0.2
     ports:
-      - "80:80"
+      - "3000:80"
     expose:
       - "80"
     networks:
@@ -88,12 +96,27 @@ services:
     environment:
       ALLOWED_HOSTS: ${SSE_CLIENT_ALLOWED_HOSTS}
       DJANGO_DEBUG: ${SSE_CLIENT_DJANGO_DEBUG}
+    
+  minio:
+    image: minio/minio
+    volumes:
+      - ./data/minio:/data
+    expose:
+      - "9000"
+    ports:
+      - "9000:9000"
+    networks:
+      - asclepios
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    command: server /data/minio
 
 networks:
  asclepios:
   driver: bridge
   name: asclepios
 
-volumes:
-  sse-db-data:
-  ta-db-data:
+# volumes:
+#   sse-db-data:
+#   ta-db-data:

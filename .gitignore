@@ -1,3 +1,2 @@
-sse-postgres-data*
-ta-postgres-data*
 .env
+data/

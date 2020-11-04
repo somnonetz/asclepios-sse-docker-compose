@@ -16,15 +16,14 @@ services:
 
   sse:
     image: uowcpc/asclepios-server:0.2_postgres
-    ports:
-      - "8080:8080"
+    # ports:
+    #   - "8080:8080"
     expose:
       - "8080"
     networks:
       - asclepios
     depends_on:
       - sse-db
-      - ta
     environment:
       DJANGO_LOGLEVEL: ${SSE_SERVER_DJANGO_LOGLEVEL}
       TA_SERVER: ${SSE_SERVER_TA_SERVER}
@@ -59,8 +58,8 @@ services:
 
   ta:
     image: uowcpc/asclepios-ta:0.2_postgres
-    ports:
-      - "8000:8000"
+    # ports:
+    #   - "8000:8000"
     expose:
       - "8000"
     networks:
@@ -96,6 +95,16 @@ services:
     environment:
       ALLOWED_HOSTS: ${SSE_CLIENT_ALLOWED_HOSTS}
       DJANGO_DEBUG: ${SSE_CLIENT_DJANGO_DEBUG}
+
+  pdp:
+    image: asclepios/abac-authorization-server
+    expose:
+      - "7071"
+    networks:
+      - asclepios
+    volumes:
+      - ./data/abac-server/config:/abac-server/config
+      - ./data/abac-server/policies:/abac-server/policies
     
   minio:
     image: minio/minio
@@ -111,7 +120,7 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
     command: server /data/minio
-
+  
 networks:
  asclepios:
   driver: bridge

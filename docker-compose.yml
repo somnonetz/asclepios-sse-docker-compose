@@ -1,7 +1,7 @@
 version: '3.5'
 services:
   sse-db:
-    image: postgres
+    image: postgres:12
     expose:
       - "5432"
     networks:
@@ -43,7 +43,7 @@ services:
       MINIO_EXPIRE_PUT: ${MINIO_EXPIRE_PUT}
 
   ta-db:
-    image: postgres
+    image: postgres:12
     expose:
       - "5432"
     networks:

@@ -1,0 +1,161 @@
+version: '3'
+services:
+  cert:
+    image: openjdk:8-jdk-alpine
+    container_name: cert
+    command: >
+      sh -c "chmod +x /mnt/bin/gen-cert.sh
+      && rm -rf /mnt/certs/common/* /mnt/certs/pdp-server/* /mnt/certs/ample-editor/*
+      && /mnt/bin/gen-cert.sh pdp-server $E_ABAC_SERVER_KEYSTORE_PASSWORD $E_COMMON_TRUSTSTORE_PASSWORD
+      && /mnt/bin/gen-cert.sh ample-editor $E_AMPLE_KEYSTORE_PASSWORD $E_COMMON_TRUSTSTORE_PASSWORD
+      && touch /mnt/certs/common/.ready"
+    working_dir: "/mnt/tpl"
+    volumes:
+      - ./conf-bin:/mnt/bin
+      - ./conf/certs/common:/mnt/certs/common:rw
+      - ./conf/certs/pdp-server:/mnt/certs/pdp-server:rw
+      - ./conf/certs/ample-editor:/mnt/certs/ample-editor:rw
+    networks:
+      - asclepios
+
+  conf:
+    image: jwilder/dockerize
+    container_name: conf
+    depends_on:
+      cert:
+        condition: service_started
+    entrypoint: >
+      sh -c "while [ ! -f /mnt/certs/common/.ready ]; do sleep 1; done
+      && dockerize -template /mnt/tpl/realm-export.json.tpl:/mnt/conf/realm-export.json"
+    environment:
+      APP_BASE_URL: ${E_APP_BASE_URL}
+      KEYCLOAK_REALM: ${E_KEYCLOAK_REALM}
+      KEYCLOAK_RESOURCE: ${E_KEYCLOAK_RESOURCE}
+      KEYCLOAK_RESOURCE_SECRET: ${E_KEYCLOAK_RESOURCE_SECRET}
+    volumes:
+      - ./conf-tpl:/mnt/tpl
+      - ./conf/certs/common:/mnt/certs/common:ro
+      - ./conf:/mnt/conf:rw
+    networks:
+      - asclepios
+
+  abac-zuul-proxy:
+    image: registry.gitlab.com/asclepios-project/abac-authorization/abac-zuul-proxy
+    container_name: abac-zuul-proxy
+    restart: on-failure
+    depends_on:
+      pdp-server:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    environment:
+      WEBAPP_BASE_URL: http://nginx:80/
+      #PDP_DISABLED: 'true'
+      PDP_ENDPOINTS: https://pdp-server:7071/checkJsonAccessRequest
+      PDP_ACCESS_KEY: ${E_ABAC_SERVER_ACCESS_KEY}
+#      PDP_TRUSTSTORE_FILE: ${E_PDP_TRUSTSTORE_FILE:-config/truststore-client.p12}
+#      PDP_TRUSTSTORE_TYPE: ${E_PDP_TRUSTSTORE_TYPE:-PKCS12}
+#      PDP_TRUSTSTORE_PASSWORD: ${E_PDP_TRUSTSTORE_PASSWORD:-asclepios}
+      PDP_TRUSTSTORE_FILE: /abac-proxy/certs/common-truststore.p12
+      PDP_TRUSTSTORE_TYPE: PKCS12
+      PDP_TRUSTSTORE_PASSWORD: ${E_COMMON_TRUSTSTORE_PASSWORD}
+      PDP_JWT_SECRET: ${E_PDP_JWT_SECRET:-asclepios}
+      PDP_LOAD_BALANCE_METHOD: ORDER
+      PDP_RETRY_COUNT: 1
+      KEYCLOAK_ENABLED: 'true'
+      KEYCLOAK_URL: ${E_KEYCLOAK_URL}
+      KEYCLOAK_REALM: ${E_KEYCLOAK_REALM}
+      KEYCLOAK_RESOURCE: ${E_KEYCLOAK_RESOURCE}
+      KEYCLOAK_RESOURCE_SECRET: ${E_KEYCLOAK_RESOURCE_SECRET}
+    ports:
+      - 80:80
+    volumes:
+      - ./zuul-proxy:/abac-proxy/config
+      - ./conf/certs/common:/abac-proxy/certs:ro
+    networks:
+      - asclepios
+
+  pdp-server:
+    image: registry.gitlab.com/asclepios-project/abac-authorization/abac-server:latest
+    container_name: pdp-server
+    depends_on:
+      conf:
+        condition: service_started
+    entrypoint: >
+      sh -c "while [ ! -f certs/.ready ]; do sleep 1; done
+      && cp -f ./certs/pdp-server* ./config/
+      && ./run.sh "
+    environment:
+      ABAC_SERVER_KEYSTORE_FILE: /abac-server/certs/pdp-server-keystore.p12
+      ABAC_SERVER_KEYSTORE_PASSWORD: ${E_ABAC_SERVER_KEYSTORE_PASSWORD}
+      ABAC_SERVER_KEYSTORE_TYPE: PKCS12
+      ABAC_SERVER_KEY_ALIAS: pdp-server
+      ABAC_SERVER_ACCESS_KEY: ${E_ABAC_SERVER_ACCESS_KEY}
+      ABAC_SERVER_API_KEY: ${E_ABAC_SERVER_API_KEY}
+      ABAC_SERVER_JPA_HIBERNATE_DDL_AUTO: update
+    volumes:
+      - ./conf/certs/pdp-server:/abac-server/certs:rw
+      - ./policies:/abac-server/policies
+    ports:
+      - "7071:7071"
+    networks:
+      - asclepios
+
+  keycloak:
+    image: jboss/keycloak:9.0.2
+    container_name: keycloak
+    restart: always
+    command:
+      - "-b 0.0.0.0 -Djboss.http.port=8181 -Dkeycloak.import=/opt/jboss/keycloak/imports/realm-export.json"
+    depends_on:
+      conf:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_USER: ${E_KEYCLOAK_USER}
+      KEYCLOAK_PASSWORD: ${E_KEYCLOAK_PASSWORD}
+      PROXY_ADDRESS_FORWARDING: "true"
+      DB_VENDOR: mysql
+      DB_ADDR: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${E_MYSQL_DATABASE}
+      DB_USER: ${E_MYSQL_USER}
+      DB_PASSWORD: ${E_MYSQL_PASSWORD}
+    ports:
+      - 8181:8181
+    volumes:
+      - ./conf:/opt/jboss/keycloak/imports:ro
+    networks:
+      - asclepios
+
+  mysql:
+    image: mysql:5.5
+    container_name: mysql
+    restart: always
+    depends_on:
+      conf:
+        condition: service_started
+    healthcheck:
+      #start_period: 30s
+      test: [ "CMD-SHELL", 'mysql --database=$$MYSQL_DATABASE --password=$$MYSQL_ROOT_PASSWORD --execute="SELECT count(table_name) > 0 FROM information_schema.tables;" --skip-column-names -B' ]
+      interval: 30s
+      timeout: 10s
+      retries: 4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${E_MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${E_MYSQL_DATABASE}
+      MYSQL_USER: ${E_MYSQL_USER}
+      MYSQL_PASSWORD: ${E_MYSQL_PASSWORD}
+#    ports:
+#      - 3306:3306
+    volumes:
+      - ./conf:/docker-entrypoint-initdb.d:ro
+      - ./mysql-data:/var/lib/mysql
+    networks:
+      - asclepios
+
+networks:
+ asclepios:
+  driver: bridge
+  name: asclepios

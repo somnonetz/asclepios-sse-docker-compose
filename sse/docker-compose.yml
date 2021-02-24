@@ -15,7 +15,7 @@ services:
       PGDATA: /var/lib/postgresql/data
 
   sse:
-    image: uowcpc/asclepios-server:0.2_postgres
+    image: uowcpc/asclepios-server:dev
     # ports:
     #   - "8080:8080"
     expose:
@@ -57,7 +57,7 @@ services:
       PGDATA: /var/lib/postgresql/data
 
   ta:
-    image: uowcpc/asclepios-ta:0.2_postgres
+    image: uowcpc/asclepios-ta:0.3
     # ports:
     #   - "8000:8000"
     expose:
@@ -81,30 +81,32 @@ services:
       IV: ${TA_IV}
       DJANGO_DEBUG: ${TA_DJANGO_DEBUG}
 
-  sse-client:
-    image: uowcpc/asclepios-client:0.2
-    ports:
-      - "3000:80"
-    expose:
-      - "80"
-    networks:
-      - asclepios
-    depends_on:
-      - sse
-      - ta
-    environment:
-      ALLOWED_HOSTS: ${SSE_CLIENT_ALLOWED_HOSTS}
-      DJANGO_DEBUG: ${SSE_CLIENT_DJANGO_DEBUG}
+  # sse-client:
+  #   image: uowcpc/asclepios-client:0.4
+  #   ports:
+  #     - "3000:80"
+  #   expose:
+  #     - "80"
+  #   networks:
+  #     - asclepios
+  #   depends_on:
+  #     - sse
+  #     - ta
+  #   environment:
+  #     ALLOWED_HOSTS: ${SSE_CLIENT_ALLOWED_HOSTS}
+  #     DJANGO_DEBUG: ${SSE_CLIENT_DJANGO_DEBUG}
 
-  pdp:
-    image: asclepios/abac-authorization-server
-    expose:
-      - "7071"
-    networks:
-      - asclepios
-    volumes:
-      - ./data/abac-server/config:/abac-server/config
-      - ./data/abac-server/policies:/abac-server/policies
+  # pdp:
+  #   image: asclepios/abac-authorization-server
+  #   expose:
+  #     - "7071"
+  #   networks:
+  #     - asclepios
+  #   volumes:
+  #     - ./data/abac-server/config:/abac-server/config
+  #     - ./data/abac-server/policies:/abac-server/policies
+  #   environment:
+  #     AUTH_SERVER_URL: "http://keycloak:8080/auth"
     
   minio:
     image: minio/minio

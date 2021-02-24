@@ -1,0 +1,6 @@
+conf/**
+mysql-data/**
+!conf/dummy.txt
+!mysql-data/dummy.txt
+**/target/**
+*.iml
